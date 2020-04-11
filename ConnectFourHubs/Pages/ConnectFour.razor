@@ -89,6 +89,7 @@
         connection.On<int, int>("sendMove", this.OppMoved);
         connection.On<string>("groupMessage", this.DisplayGroup);
         connection.On<string>("sendGroup", this.GetGroups);
+        connection.On<string>("resetGame", this.ResetGame);
         await connection.StartAsync();
     }
     async Task JoinGroup(string groupName)
@@ -166,12 +167,20 @@
             currentTurn = PieceColor.Red;
         }
     }
-    private void Reset()
+    private async void Reset()
     {
+        await connection.SendAsync("ResetGame", groupname);
         board = new GameBoard();
         currentTurn = PieceColor.Red;
         winningColor = PieceColor.Blank;
+        begin = false;
+        groupname = null;
         StateHasChanged();
+    }
+    private void ResetGame(string message)
+    {
+        hubMessages.Add(message);
+        Reset();
     }
     private void SelectRandom(MouseEventArgs e)
     {

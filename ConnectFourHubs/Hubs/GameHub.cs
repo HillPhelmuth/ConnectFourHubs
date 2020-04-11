@@ -21,12 +21,12 @@ namespace ConnectFourHubs.Hubs
             var message = "Your opponent moved!";
             await Clients.OthersInGroup(groupName).SendAsync("groupMessage", message);
         }
-        public async Task<bool> GroupExists(string groupName)
+        public async Task ResetGame(string groupName)
         {
-            if (Context.Items.ContainsKey(groupName))
-                return (bool)await Task.FromResult(Context.Items[groupName]);
-            return await Task.FromResult(false);
+            var message = "Game Reset!";
+            await Clients.OthersInGroup(groupName).SendAsync("resetGame", message);
         }
+        
         
     }
 }
