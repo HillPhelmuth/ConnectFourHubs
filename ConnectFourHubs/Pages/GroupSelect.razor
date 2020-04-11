@@ -1,0 +1,51 @@
+﻿
+<p>username:</p>
+<MatStringField @bind-Value="username" Label="User Name"></MatStringField>
+<button class="btn btn-primary" @onclick="AddUser">Next</button>
+@if (connected)
+{
+<h4>Create or Join a game</h4>
+<h5>Enter the name of the game you wish to create or join from the above list.</h5>
+    <MatStringField @bind-Value="groupname" Label="Game name"></MatStringField>
+    <br />
+    <button class="btn btn-primary" @onclick="JoinGroup">Join Game</button><br />
+   
+    @if (beginGame)
+    {
+        <button class="btn btn-primary" @onclick="StartGame">Click here to start Connect Four</button>
+    }
+}
+
+@code {
+    [Parameter]
+    public string username { get; set; }
+    [Parameter]
+    public string groupname { get; set; }
+    [Parameter]
+    public EventCallback<string> usernameChanged { get; set; }
+    [Parameter]
+    public EventCallback<string> groupnameChanged { get; set; }
+    [Parameter]
+    public EventCallback JoinGame { get; set; }
+    List<string> groups = new List<string>();
+    bool beginGame = false;
+    bool connected = false;
+
+    async Task AddUser()
+    {
+        await usernameChanged.InvokeAsync(username);
+        connected = true;
+        StateHasChanged();
+    }
+    async Task JoinGroup()
+    {
+        await groupnameChanged.InvokeAsync(groupname);
+        beginGame = true;
+        StateHasChanged();
+    }
+    async Task StartGame()
+    {
+        await JoinGame.InvokeAsync(true);
+        StateHasChanged();
+    }
+}

@@ -1,0 +1,17 @@
+<Project Sdk="Microsoft.NET.Sdk.Web">
+
+  <PropertyGroup>
+    <TargetFramework>netcoreapp3.1</TargetFramework>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <Compile Remove="Interfaces\IHubGroup.cs" />
+    <Compile Remove="Models\HubGroup.cs" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="MatBlazor" Version="2.3.0" />
+    <PackageReference Include="Microsoft.AspNetCore.SignalR.Client" Version="3.1.3" />
+  </ItemGroup>
+
+</Project>

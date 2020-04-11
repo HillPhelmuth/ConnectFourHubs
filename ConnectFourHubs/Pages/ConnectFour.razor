@@ -1,0 +1,169 @@
+﻿@inject IGamePlay GamePlay
+@inject NavigationManager NavigationManager
+
+<h2 class="text-center">Connect Four</h2>
+<div class="text-center">
+    @if (!begin)
+    {
+        <span>Available games:</span>
+        <ul style="display:inline">
+            @foreach (var grp in CreatedGroups)
+            {
+                <li>@grp</li>
+            }
+        </ul>
+    }
+@if (winningColor != PieceColor.Blank)
+{
+    string winner;
+    if (ThisUser.Color == winningColor)
+    { winner = "You Win!"; }
+    else
+    { winner = "Your Opponent Wins!"; }
+    <h2><span style="background-color:@winningColor.ToString().ToLower()">@winner </span></h2>
+    <h2><button class="btn btn-success" @onclick="@(() => Reset())">Reset</button></h2>
+}
+@if (!begin)
+{
+
+    <GroupSelect @bind-username="username" groupnameChanged="JoinGroup" JoinGame="StartGame">
+    </GroupSelect>
+
+}
+else
+{
+    <h4>Game: @groupname</h4>
+    @if (ThisUser != null)
+    {
+        <p>Welcome, @username! You are playing with the <span class="@ThisUser.Color.ToString().ToLower()">@ThisUser.Color</span> pieces.</p>
+    }
+    @if (winningColor == PieceColor.Blank)
+    {
+        <h4 class="@currentTurn.ToString().ToLower()">@currentTurn's Turn!</h4>
+
+    }
+    <div class="board @cssAnimation">
+        @for (int i = 0; i < 7; i++)
+        {
+            <div class="column">
+                @for (int j = 0; j < 6; j++)
+                {
+                    int x = i;
+                    int y = j;
+                    <div class="gamepiece @board.Board[i, j].Color.ToString().ToLower()" @onclick="@(() => DropPiece(x, y))"></div>
+                }
+            </div>
+        }
+    </div>
+    <div class="row" style="margin:auto">
+        @foreach (var message in hubMessages)
+        {
+            <h3>@message</h3>
+        }
+    </div>
+}
+</div>
+@code {
+
+    HubConnection connection;
+    GameBoard board = new GameBoard();
+    PieceColor currentTurn = PieceColor.Red;
+    PieceColor winningColor = PieceColor.Blank;
+    User ThisUser;
+    public string groupname { get; set; }
+    public string username { get; set; }
+    List<string> hubMessages = new List<string>();
+    List<string> CreatedGroups = new List<string>();
+    public bool begin = false;
+    string cssAnimation = "startSpin";
+    protected override async Task OnInitializedAsync()
+    {
+        connection = new HubConnectionBuilder()
+            .WithUrl(NavigationManager.ToAbsoluteUri("/gameHub"))
+            .Build();
+        connection.On<int, int>("sendMove", this.OppMoved);
+        connection.On<string>("groupMessage", this.DisplayGroup);
+        connection.On<string>("sendGroup", this.GetGroups);
+        await connection.StartAsync();
+    }
+    async Task JoinGroup(string groupName)
+    {
+        groupname = groupName;
+        await connection.SendAsync("JoinGroup", groupname, username);
+        StateHasChanged();
+    }
+    void GetGroups(string group)
+    {
+        CreatedGroups.Add(group);
+        StateHasChanged();
+    }
+    void StartGame()
+    {
+        ThisUser = new User() { Name = username };
+        ThisUser.Color = CreatedGroups.Contains(groupname) ? PieceColor.Yellow : PieceColor.Red;
+        begin = true;
+    }
+    void DisplayGroup(string message)
+    {
+        hubMessages.Add(message);
+        StateHasChanged();
+    }
+    void OppMoved(int x, int y)
+    {
+        PieceClicked(x, y);
+        StateHasChanged();
+    }
+    void PieceClicked(int x, int y)
+    {
+        if (winningColor != PieceColor.Blank) { return; }
+
+        var clickedSpace = board.Board[x, y];
+        // Drop to lowest slot
+        if (clickedSpace.Color == PieceColor.Blank)
+        {
+            while (y < 5)
+            {
+                var nextSpace = board.Board[x, y + 1];
+                y += 1;
+                if (nextSpace.Color == PieceColor.Blank)
+                    clickedSpace = nextSpace;
+            }
+            clickedSpace.Color = currentTurn;
+            winningColor = GamePlay.DetermineWinner(board);
+            if (winningColor == PieceColor.Blank)
+            {
+                SwitchTurns();
+            }
+            else
+            {
+                cssAnimation = "imageSpin";
+            }
+        }
+    }
+    async void DropPiece(int x, int y)
+    {
+        if (ThisUser.Color != currentTurn)
+            return;
+        PieceClicked(x, y);
+        await connection.SendAsync("SendMove", x, y, groupname);
+        StateHasChanged();
+    }
+    private void SwitchTurns()
+    {
+        if (currentTurn == PieceColor.Red)
+        {
+            currentTurn = PieceColor.Yellow;
+        }
+        else
+        {
+            currentTurn = PieceColor.Red;
+        }
+    }
+    private void Reset()
+    {
+        board = new GameBoard();
+        currentTurn = PieceColor.Red;
+        winningColor = PieceColor.Blank;
+        StateHasChanged();
+    }
+}

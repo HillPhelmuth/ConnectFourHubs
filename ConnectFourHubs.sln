@@ -1,0 +1,25 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 16
+VisualStudioVersion = 16.0.29926.136
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ConnectFourHubs", "ConnectFourHubs\ConnectFourHubs.csproj", "{6146A707-D1CD-4082-82AD-BF80A88964FC}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{6146A707-D1CD-4082-82AD-BF80A88964FC}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{6146A707-D1CD-4082-82AD-BF80A88964FC}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{6146A707-D1CD-4082-82AD-BF80A88964FC}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{6146A707-D1CD-4082-82AD-BF80A88964FC}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {CB9BD4F0-ABA2-4BF3-8F3F-5F073AB6A801}
+	EndGlobalSection
+EndGlobal
