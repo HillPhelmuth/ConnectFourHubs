@@ -1,44 +1,77 @@
 ﻿
-<p>username:</p>
+
 <MatStringField @bind-Value="username" Label="User Name"></MatStringField>
-<button class="btn btn-primary" @onclick="AddUser">Next</button>
+<br />
+<MatCheckbox @bind-Value="IsSingle" Label="Single player game?"></MatCheckbox>
+<br />
+<button class="btn btn-primary" style="margin-top:1em" @onclick="AddUser">Next</button>
 @if (connected)
 {
-<h4>Create or Join a game</h4>
-<h5>Enter the name of the game you wish to create or join from the above list.</h5>
-    <MatStringField @bind-Value="groupname" Label="Game name"></MatStringField>
-    <br />
-    <button class="btn btn-primary" @onclick="JoinGroup">Join Game</button><br />
-   
-    @if (beginGame)
+    <h4>Create or Join a game</h4>
+    <MatSlideToggle @bind-Value="isJoin" @onclick="CreateOrJoin" Label="@createJoin"></MatSlideToggle><br />
+    @if (!isJoin)
     {
-        <button class="btn btn-primary" @onclick="StartGame">Click here to start Connect Four</button>
+        <MatStringField @bind-Value="groupname" Label="New group name"></MatStringField>
     }
+    else
+    {
+        <MatSelect Label="Select a game to join" @bind-Value="groupname">
+            <MatOptionString></MatOptionString>
+            @foreach (var grp in CreatedGroups)
+            {
+                <MatOptionString Value="@grp">@grp</MatOptionString>
+            }
+        </MatSelect>
+    }
+    <br />
+    <button class="btn btn-primary" @onclick="JoinGroup">Join Game</button>
+    <hr />
 }
-
+@if (beginGame)
+{
+    <button class="btn btn-primary" @onclick="StartGame">Click here to start Connect Four!</button>
+}
 @code {
     [Parameter]
     public string username { get; set; }
     [Parameter]
     public string groupname { get; set; }
     [Parameter]
+    public bool IsSingle { get; set; }
+    [Parameter]
     public EventCallback<string> usernameChanged { get; set; }
     [Parameter]
     public EventCallback<string> groupnameChanged { get; set; }
     [Parameter]
     public EventCallback JoinGame { get; set; }
-    List<string> groups = new List<string>();
+    [Parameter]
+    public EventCallback<bool> IsSingleChanged { get; set; }
+    [CascadingParameter]
+    public List<string> CreatedGroups { get; set; }
+    string createJoin = "Create a new Game";
     bool beginGame = false;
     bool connected = false;
+    bool isJoin = false;
 
     async Task AddUser()
     {
         await usernameChanged.InvokeAsync(username);
+        await IsSingleChanged.InvokeAsync(IsSingle);
+        if (IsSingle)
+        {
+            await StartGame();
+            return;
+        }
         connected = true;
         StateHasChanged();
     }
     async Task JoinGroup()
     {
+        if (IsSingle)
+        {
+            await StartGame();
+            return;
+        }
         await groupnameChanged.InvokeAsync(groupname);
         beginGame = true;
         StateHasChanged();
@@ -47,5 +80,9 @@
     {
         await JoinGame.InvokeAsync(true);
         StateHasChanged();
+    }
+    void CreateOrJoin()
+    {
+        createJoin = "Join a game";
     }
 }

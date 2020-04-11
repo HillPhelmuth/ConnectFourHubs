@@ -5,63 +5,67 @@
 <div class="text-center">
     @if (!begin)
     {
-        <span>Available games:</span>
-        <ul style="display:inline">
+        <span style="font-size:1.2em">Available games:</span>
+        <ul class="list-group" style="margin:auto">
             @foreach (var grp in CreatedGroups)
             {
-                <li>@grp</li>
+                <li class="list-group-item" style="font-weight:600; margin-left:20em;margin-right:20em">@grp</li>
             }
         </ul>
     }
-@if (winningColor != PieceColor.Blank)
-{
-    string winner;
-    if (ThisUser.Color == winningColor)
-    { winner = "You Win!"; }
+    @if (winningColor != PieceColor.Blank)
+    {
+        string winner;
+        if (ThisUser.Color == winningColor)
+        { winner = "You Win!"; }
+        else
+        { winner = "Your Opponent Wins!"; }
+        <h2><span style="background-color:@winningColor.ToString().ToLower()">@winner </span></h2>
+        <h2><button class="btn btn-success" @onclick="@(() => Reset())">Reset</button></h2>
+    }
+    @if (!begin)
+    {
+        <CascadingValue Value="CreatedGroups">
+            <GroupSelect @bind-username="username" groupnameChanged="JoinGroup" JoinGame="StartGame" @bind-IsSingle="isSingle">
+            </GroupSelect>
+        </CascadingValue>
+    }
     else
-    { winner = "Your Opponent Wins!"; }
-    <h2><span style="background-color:@winningColor.ToString().ToLower()">@winner </span></h2>
-    <h2><button class="btn btn-success" @onclick="@(() => Reset())">Reset</button></h2>
-}
-@if (!begin)
-{
-
-    <GroupSelect @bind-username="username" groupnameChanged="JoinGroup" JoinGame="StartGame">
-    </GroupSelect>
-
-}
-else
-{
-    <h4>Game: @groupname</h4>
-    @if (ThisUser != null)
     {
-        <p>Welcome, @username! You are playing with the <span class="@ThisUser.Color.ToString().ToLower()">@ThisUser.Color</span> pieces.</p>
-    }
-    @if (winningColor == PieceColor.Blank)
-    {
-        <h4 class="@currentTurn.ToString().ToLower()">@currentTurn's Turn!</h4>
+        <h4>Game: @groupname</h4>
+        @if (ThisUser != null)
+        {
+            <p>Welcome, @username! You are playing with the <span class="@ThisUser.Color.ToString().ToLower()">@ThisUser.Color</span> pieces.</p>
+        }
+        @if (winningColor == PieceColor.Blank)
+        {
+            <h4 class="@currentTurn.ToString().ToLower()">@currentTurn's Turn!</h4>
 
+        }
+        @if (isSingle)
+        {
+            <button @onclick="SelectRandom">Select a Random space</button>
+        }
+        <div class="board @cssAnimation">
+            @for (int i = 0; i < 7; i++)
+            {
+                <div class="column">
+                    @for (int j = 0; j < 6; j++)
+                    {
+                        int x = i;
+                        int y = j;
+                        <div class="gamepiece @board.Board[i, j].Color.ToString().ToLower()" @onclick="@(() => DropPiece(x, y))"></div>
+                    }
+                </div>
+            }
+        </div>
+        <div class="row list-group" style="margin:auto">
+            @foreach (var message in hubMessages)
+            {
+                <div class="list-group-item">@message</div>
+            }
+        </div>
     }
-    <div class="board @cssAnimation">
-        @for (int i = 0; i < 7; i++)
-        {
-            <div class="column">
-                @for (int j = 0; j < 6; j++)
-                {
-                    int x = i;
-                    int y = j;
-                    <div class="gamepiece @board.Board[i, j].Color.ToString().ToLower()" @onclick="@(() => DropPiece(x, y))"></div>
-                }
-            </div>
-        }
-    </div>
-    <div class="row" style="margin:auto">
-        @foreach (var message in hubMessages)
-        {
-            <h3>@message</h3>
-        }
-    </div>
-}
 </div>
 @code {
 
@@ -75,6 +79,7 @@ else
     List<string> hubMessages = new List<string>();
     List<string> CreatedGroups = new List<string>();
     public bool begin = false;
+    bool isSingle = false;
     string cssAnimation = "startSpin";
     protected override async Task OnInitializedAsync()
     {
@@ -106,6 +111,8 @@ else
     void DisplayGroup(string message)
     {
         hubMessages.Add(message);
+        if (hubMessages.Count() > 5)
+            hubMessages.RemoveAt(0);
         StateHasChanged();
     }
     void OppMoved(int x, int y)
@@ -142,7 +149,7 @@ else
     }
     async void DropPiece(int x, int y)
     {
-        if (ThisUser.Color != currentTurn)
+        if (ThisUser.Color != currentTurn && !isSingle)
             return;
         PieceClicked(x, y);
         await connection.SendAsync("SendMove", x, y, groupname);
@@ -165,5 +172,24 @@ else
         currentTurn = PieceColor.Red;
         winningColor = PieceColor.Blank;
         StateHasChanged();
+    }
+    private void SelectRandom(MouseEventArgs e)
+    {
+        Random random = new Random();
+        int row = random.Next(board.Board.GetLength(0));
+        int column = random.Next(board.Board.GetLength(1));
+        if (board.Board[row, column].Color == PieceColor.Blank)
+        {
+            PieceClicked(row, column);
+        }
+        else
+        {
+            while (board.Board[row, column].Color != PieceColor.Blank)
+            {
+                row = random.Next(board.Board.GetLength(0));
+                column = random.Next(board.Board.GetLength(1));
+            }
+            PieceClicked(row, column);
+        }
     }
 }
